@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "ips": ["94.198.54.0/23"],
+      "country": {
+        "geoname_id": 2017370,
+        "iso_code": "RU",
+        "names": {
+          "en": "Russia"
+        }
+      }
+    },
+    {
+      "ips": ["10.200.0.0/24","192.168.33.13/30","127.0.0.1/32"],
+      "country": {
+        "geoname_id": 6255148,
+        "iso_code": "NA",
+        "names": {
+          "en": "Iglov's property"
+        }
+      }
+    }
+  ]
+}
