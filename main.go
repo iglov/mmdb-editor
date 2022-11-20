@@ -1,96 +1,122 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
-	"encoding/json"
-	"io/ioutil"
 
 	"github.com/maxmind/mmdbwriter"
 	"github.com/maxmind/mmdbwriter/inserter"
 	"github.com/maxmind/mmdbwriter/mmdbtype"
 )
 
+var (
+	datasetGeo = flag.String("d", "./dataset.json", "Dataset file path.")
+	inputGeo   = flag.String("i", "./GeoLite2-City.mmdb", "Input GeoLite2-City.mmdb file path.")
+	outputGeo  = flag.String("o", "./GeoLite2-City-mod.mmdb", "Output modified mmdb file path.")
+	version    = flag.Bool("v", false, "Print current version and exit.")
+)
+
+var Version string
+
 type Dataset struct {
-        Dataset []Geo `json:"data"`
+	Dataset []Geo `json:"data"`
 }
 
 type Geo struct {
-        Ips     []string `json:"ips"`
-        Country Country  `json:"country"`
+	Ips     []string `json:"ips"`
+	Country Country  `json:"country"`
 }
 
 type Country struct {
-        Iso_code   string `json:"iso_code"`
-        Geoname_id int    `json:"geoname_id"`
-        Names      Names  `json:"names"`
+	Iso_code   string `json:"iso_code"`
+	Geoname_id int    `json:"geoname_id"`
+	Names      Names  `json:"names"`
 }
 
 type Names struct {
-        En string `json:"en"`
+	En string `json:"en"`
 }
 
 func main() {
-        var dataset Dataset
-        const mmdb = "GeoLite2-City.mmdb"
+	var dataset Dataset
 
-        log.Printf("Loading mmdb: %v", mmdb)
+	flag.Parse()
+	if *version {
+		fmt.Println(Version)
+		os.Exit(0)
+	}
 
-	// Load the database we wish to modify.
-	writer, err := mmdbwriter.Load(mmdb, mmdbwriter.Options{
-                IncludeReservedNetworks: true,
-                Description: map[string]string {"en": "Compiled with love by iglov (c) https://github.com/iglov/mmdb-editor"},
-        })
-	if err != nil { log.Fatal(err) }
+	log.Printf("Loading mmdb: %v", *inputGeo)
 
-        content, err := ioutil.ReadFile("dataset.json")
-        if err != nil {
-                log.Fatal("Error when opening file: ", err)
-        }
+	// Load the database we wish to enrich.
+	writer, err := mmdbwriter.Load(*inputGeo, mmdbwriter.Options{
+		IncludeReservedNetworks: true,
+		Description:             map[string]string{"en": fmt.Sprintf("Compiled with mmdb-editor (%v) https://github.com/iglov/mmdb-editor", Version)},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
-        err = json.Unmarshal(content, &dataset)
-        if err != nil {
-                log.Printf("error decoding sakura response: %v", err)
-                if e, ok := err.(*json.SyntaxError); ok {
-                        log.Printf("syntax error at byte offset %d", e.Offset)
-                }
-                log.Printf("sakura response: %q", content)
-                log.Fatal("Error during Unmarshal(): ", err)
-        }
+	content, err := ioutil.ReadFile(*datasetGeo)
+	if err != nil {
+		log.Fatal("Error when opening file: ", err)
+	}
 
-        log.Printf("Loaded data: %v", dataset.Dataset)
+	err = json.Unmarshal(content, &dataset)
+	if err != nil {
+		log.Printf("error decoding response: %v", err)
+		if e, ok := err.(*json.SyntaxError); ok {
+			log.Printf("syntax error at byte offset %d", e.Offset)
+		}
+		log.Printf("response: %q", content)
+		log.Fatal("Error during Unmarshal(): ", err)
+	}
 
-        for i := 0; i < len(dataset.Dataset); i++ {
-        	// Define and insert the new data.
-	        data := mmdbtype.Map{
-        		"country": mmdbtype.Map{
-	        		"geoname_id": mmdbtype.Uint32(dataset.Dataset[i].Country.Geoname_id),
-		        	"iso_code":   mmdbtype.String(dataset.Dataset[i].Country.Iso_code),
-			        "names": mmdbtype.Map{
-				        "en": mmdbtype.String(dataset.Dataset[i].Country.Names.En),
-			        },
-		        },
-	        }
+	log.Printf("Loaded data: %v", dataset.Dataset)
 
-                for _, ip := range dataset.Dataset[i].Ips {
-        	        _, network, err := net.ParseCIDR(ip)
-                        log.Printf("Compiling net: %q", network)
-                	if err != nil { log.Fatal(err) }
-                        // We can use here inserter.TopLevelMergeWith but we need to replace data with new one
-	                if err := writer.InsertFunc(network, inserter.ReplaceWith(data)); err != nil {
-		                log.Fatal(err)
-        	        }
+	for i := 0; i < len(dataset.Dataset); i++ {
+		// Define and insert the new data.
+		data := mmdbtype.Map{
+			"country": mmdbtype.Map{
+				"geoname_id": mmdbtype.Uint32(dataset.Dataset[i].Country.Geoname_id),
+				"iso_code":   mmdbtype.String(dataset.Dataset[i].Country.Iso_code),
+				"names": mmdbtype.Map{
+					"en": mmdbtype.String(dataset.Dataset[i].Country.Names.En),
+				},
+			},
+		}
 
-                }
-        }
+		for _, ip := range dataset.Dataset[i].Ips {
+			_, network, err := net.ParseCIDR(ip)
+			log.Printf("Modifying net: %q", network)
+			if err != nil {
+				log.Fatal(err)
+			}
+			// We can use here inserter.TopLevelMergeWith but we need to replace data with new one
+			if err := writer.InsertFunc(network, inserter.ReplaceWith(data)); err != nil {
+				log.Fatal(err)
+			}
+
+		}
+	}
+
+	log.Printf("Compiling and writing modified data into: %v", *outputGeo)
 
 	// Write the newly enriched DB to the filesystem.
-	fh, err := os.Create("GeoLite2-City-mod.mmdb")
-	if err != nil { log.Fatal(err) }
+	fh, err := os.Create(*outputGeo)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-        defer fh.Close()
+	defer fh.Close()
 
 	_, err = writer.WriteTo(fh)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 }
