@@ -42,6 +42,12 @@ type Names struct {
 	En string `json:"en"`
 }
 
+func Check(f func() error) {
+	if err := f(); err != nil {
+		fmt.Println("Received error:", err)
+	}
+}
+
 func main() {
 	var dataset Dataset
 
@@ -113,7 +119,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	defer fh.Close()
+	defer Check(fh.Close)
 
 	_, err = writer.WriteTo(fh)
 	if err != nil {
