@@ -25,13 +25,35 @@ clean:
 build:
 	go build -tags "$(BUILDTAGS)" -ldflags "$(LDFLAGS)" -o bin/${APP_NAME}
 
-.PHONY: fmt
 fmt:
-	gofmt -l -w -s .
+	gofmt -l -w -s ./
 
-.PHONY: vet
 vet:
-	go vet .
+	go vet ./...
 
-.PHONY: check
-check: fmt vet
+lint: install-golint
+	golint ./...
+
+install-golint:
+	which golint || go install golang.org/x/lint/golint@latest
+
+govulncheck: install-govulncheck
+	govulncheck ./...
+
+install-govulncheck:
+	which govulncheck || go install golang.org/x/vuln/cmd/govulncheck@latest
+
+errcheck: install-errcheck
+	errcheck -exclude=errcheck_excludes.txt ./...
+
+install-errcheck:
+	which errcheck || go install github.com/kisielk/errcheck@latest
+
+golangci-lint: install-golangci-lint
+	golangci-lint run --exclude '(SA4003|SA1019|SA5011):' -D errcheck -D structcheck --timeout 2m
+
+install-golangci-lint:
+	which golangci-lint || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.48.0
+
+check: fmt vet lint errcheck golangci-lint govulncheck
+
