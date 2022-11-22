@@ -1,6 +1,7 @@
 [![Latest Release](https://img.shields.io/github/release/iglov/mmdb-editor.svg?style=flat-square)](https://github.com/iglov/mmdb-editor/releases/latest)
 [![GitHub license](https://img.shields.io/github/license/iglov/mmdb-editor.svg)](https://github.com/iglov/mmdb-editor/blob/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/iglov/mmdb-editor)](https://goreportcard.com/report/github.com/iglov/mmdb-editor)
+[![Build Status](https://github.com/iglov/mmdb-editor/workflows/main/badge.svg)](https://github.com/iglov/mmdb-editor/actions) 
 
 # mmdb-editor
 Make your own GeoIP database! The simple utility for editing MMDB databases.
