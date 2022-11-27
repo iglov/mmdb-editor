@@ -30,7 +30,11 @@ jobs:
           git diff --exit-code
           make build
     - name: Test
-      run: go test -v ./...
+      run: |
+        make test-full
+        make test-race
+        make test-pure
+        make benchmark-pure
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
