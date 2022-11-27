@@ -57,3 +57,22 @@ install-golangci-lint:
 
 check: fmt vet lint errcheck golangci-lint govulncheck
 
+test-main:
+	go test ./...
+
+test-race:
+	go test -race ./...
+
+test-pure:
+	CGO_ENABLED=0 go test ./...
+
+test-full:
+	go test -coverprofile=coverage.txt -covermode=atomic ./...
+
+benchmark:
+	go test -bench=. ./...
+
+benchmark-pure:
+	CGO_ENABLED=0 go test -bench=. ./...
+
+test: test-main test-race test-pure test-full benchmark benchmark-pure
