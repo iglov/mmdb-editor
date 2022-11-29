@@ -1,0 +1,33 @@
+name: Linter
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.github/**'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.github/**'
+
+permissions:
+  contents: read
+  
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          check-latest: true
+          go-version: '1.19'
+        id: go
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
