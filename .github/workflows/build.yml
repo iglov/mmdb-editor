@@ -24,14 +24,9 @@ permissions:
   contents: read
 
 jobs:
-  linter:
-    uses: ./.github/workflows/linter.yml
-
   build:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    needs:
-      - linter
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
