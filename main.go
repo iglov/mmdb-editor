@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -68,7 +67,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	content, err := ioutil.ReadFile(*datasetGeo)
+	content, err := os.ReadFile(*datasetGeo)
 	if err != nil {
 		log.Fatal("Error when opening file: ", err)
 	}
