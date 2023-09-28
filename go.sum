@@ -3,8 +3,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/maxmind/mmdbinspect v0.1.1 h1:m2VCyiRq/NsB7SzyRb2O/ag+ow/Q2BmJGfaMI/rz5WQ=
 github.com/maxmind/mmdbinspect v0.1.1/go.mod h1:WbAaF5rlBxwni5UwkXUsZd9OSNPnK6/46aF60qSCbrg=
-github.com/maxmind/mmdbwriter v0.0.0-20221024142553-ff6538147996 h1:ZllqW+vRQELpmMtWHHDjeIeD6cajKnMvwbEZGT7Ynv0=
-github.com/maxmind/mmdbwriter v0.0.0-20221024142553-ff6538147996/go.mod h1:3OQuci6HAhYUu3qasU5SxZjA1vFaH1MB/Ekn0yWs1q4=
+github.com/maxmind/mmdbwriter v1.0.0 h1:bieL4P6yaYaHvbtLSwnKtEvScUKKD6jcKaLiTM3WSMw=
+github.com/maxmind/mmdbwriter v1.0.0/go.mod h1:noBMCUtyN5PUQ4H8ikkOvGSHhzhLok51fON2hcrpKj8=
 github.com/oschwald/maxminddb-golang v1.6.1-0.20200115172950-664f3fe38c62/go.mod h1:DUJFucBg2cvqx42YmDa/+xHvb0elJtOm3o4aFQ/nb/w=
 github.com/oschwald/maxminddb-golang v1.12.0 h1:9FnTOD0YOhP7DGxGsq4glzpGy5+w7pq50AS6wALUMYs=
 github.com/oschwald/maxminddb-golang v1.12.0/go.mod h1:q0Nob5lTCqyQ8WT6FYgS1L7PXKVVbgiymefNwIjPzgY=
