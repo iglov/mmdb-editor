@@ -55,27 +55,27 @@ func TestRecordsForNetwork(t *testing.T) {
 	reader, err := mmdbinspect.OpenDB(CityDBPathOut) // ipv6 database
 	a.NoError(err, "no open error")
 
-	records, err := mmdbinspect.RecordsForNetwork(*reader, "123.125.71.29")
+	records, err := mmdbinspect.RecordsForNetwork(*reader, true, "123.125.71.29")
 	a.NoError(err, "no error on lookup of 123.125.71.29")
 	a.NotNil(records, "records returned")
 
-	records, err = mmdbinspect.RecordsForNetwork(*reader, "127.0.0.1/32")
+	records, err = mmdbinspect.RecordsForNetwork(*reader, true, "127.0.0.1/32")
 	a.NoError(err, "no error on lookup of 127.0.0.1/32")
 	a.NotNil(records, "records returned")
 
-	records, err = mmdbinspect.RecordsForNetwork(*reader, "10.200.0.33")
+	records, err = mmdbinspect.RecordsForNetwork(*reader, true, "10.200.0.33")
 	a.NoError(err, "no error on lookup of 10.200.0.33")
 	a.NotNil(records, "records returned")
 
-	records, err = mmdbinspect.RecordsForNetwork(*reader, "192.168.33.13/30")
+	records, err = mmdbinspect.RecordsForNetwork(*reader, true, "192.168.33.13/30")
 	a.NoError(err, "no error on lookup of 192.168.33.13/30")
 	a.NotNil(records, "records returned")
 
-	records, err = mmdbinspect.RecordsForNetwork(*reader, "1.1.1.1/29")
+	records, err = mmdbinspect.RecordsForNetwork(*reader, true, "1.1.1.1/29")
 	a.NoError(err, "got no error when IP not found")
 	a.Nil(records, "no records returned for 1.1.1.1/29")
 
-	records, err = mmdbinspect.RecordsForNetwork(*reader, "X.X.Y.Z")
+	records, err = mmdbinspect.RecordsForNetwork(*reader, true, "X.X.Y.Z")
 	a.Error(err, "got an error")
 	a.Nil(records, "no records returned for X.X.Y.Z")
 	a.Equal("X.X.Y.Z is not a valid IP address", err.Error())
@@ -91,7 +91,7 @@ func TestRecordToString(t *testing.T) {
 	a.NoError(err, "no open error")
 
 	for _, ip := range ips {
-		records, err := mmdbinspect.RecordsForNetwork(*reader, ip)
+		records, err := mmdbinspect.RecordsForNetwork(*reader, true, ip)
 		a.NoError(err, "no RecordsForNetwork error")
 		prettyJSON, err := mmdbinspect.RecordToString(records)
 

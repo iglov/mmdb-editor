@@ -3,7 +3,7 @@ module github.com/iglov/mmdb-editor
 go 1.19
 
 require (
-	github.com/maxmind/mmdbinspect v0.1.1
+	github.com/maxmind/mmdbinspect v0.2.0
 	github.com/maxmind/mmdbwriter v1.0.0
 	github.com/oschwald/maxminddb-golang v1.12.0
 	github.com/stretchr/testify v1.9.0
