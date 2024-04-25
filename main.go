@@ -126,13 +126,15 @@ func main() {
 					"ru": mmdbtype.String(dataset.Dataset[i].Country.Names.Ru),
 				},
 			},
-			"city": mmdbtype.Map{
+		}
+		if Empty(dataset.Dataset[i].City) == false {
+			data["city"] = mmdbtype.Map{
 				"geoname_id": mmdbtype.Uint32(dataset.Dataset[i].City.Geoname_id),
 				"names": mmdbtype.Map{
 					"en": mmdbtype.String(dataset.Dataset[i].City.Names.En),
 					"ru": mmdbtype.String(dataset.Dataset[i].City.Names.Ru),
 				},
-			},
+			}
 		}
 		if Empty(dataset.Dataset[i].Org) == false {
 			data["org"] = mmdbtype.String(dataset.Dataset[i].Org)
