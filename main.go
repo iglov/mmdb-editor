@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"reflect"
 
 	"github.com/maxmind/mmdbwriter"
 	"github.com/maxmind/mmdbwriter/inserter"
@@ -18,9 +19,10 @@ var (
 	inputGeo   = flag.String("i", "./GeoLite2-City.mmdb", "Input GeoLite2-City.mmdb file path.")
 	outputGeo  = flag.String("o", "./GeoLite2-City-mod.mmdb", "Output modified mmdb file path.")
 	version    = flag.Bool("v", false, "Print current version and exit.")
+	merge      = flag.Bool("m", false, "Merge Mode")
 )
 
-var Version string
+var Version string = "1.0.3"
 
 type Dataset struct {
 	Dataset []Geo `json:"data"`
@@ -29,6 +31,8 @@ type Dataset struct {
 type Geo struct {
 	Ips     []string `json:"ips"`
 	Country Country  `json:"country"`
+	City    City     `json:"city"`
+	Org     string   `json:"org"`
 }
 
 type Country struct {
@@ -36,9 +40,36 @@ type Country struct {
 	Geoname_id int    `json:"geoname_id"`
 	Names      Names  `json:"names"`
 }
+type City struct {
+	Geoname_id int   `json:"geoname_id"`
+	Names      Names `json:"names"`
+}
 
 type Names struct {
 	En string `json:"en"`
+	Ru string `json:"ru"`
+}
+
+func Empty(val interface{}) bool {
+	v := reflect.ValueOf(val)
+	switch v.Kind() {
+	case reflect.String, reflect.Array:
+		return v.Len() == 0
+	case reflect.Map, reflect.Slice:
+		return v.Len() == 0 || v.IsNil()
+	case reflect.Bool:
+		return !v.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return v.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return v.Float() == 0
+	case reflect.Interface, reflect.Ptr:
+		return v.IsNil()
+	}
+
+	return reflect.DeepEqual(val, reflect.Zero(v.Type()).Interface())
 }
 
 func Check(f func() error) {
@@ -92,8 +123,19 @@ func main() {
 				"iso_code":   mmdbtype.String(dataset.Dataset[i].Country.Iso_code),
 				"names": mmdbtype.Map{
 					"en": mmdbtype.String(dataset.Dataset[i].Country.Names.En),
+					"ru": mmdbtype.String(dataset.Dataset[i].Country.Names.Ru),
 				},
 			},
+			"city": mmdbtype.Map{
+				"geoname_id": mmdbtype.Uint32(dataset.Dataset[i].City.Geoname_id),
+				"names": mmdbtype.Map{
+					"en": mmdbtype.String(dataset.Dataset[i].City.Names.En),
+					"ru": mmdbtype.String(dataset.Dataset[i].City.Names.Ru),
+				},
+			},
+		}
+		if Empty(data["org"]) == false {
+			data["org"] = mmdbtype.String(dataset.Dataset[i].Org)
 		}
 
 		for _, ip := range dataset.Dataset[i].Ips {
@@ -103,10 +145,15 @@ func main() {
 				log.Fatal(err)
 			}
 			// We can use here inserter.TopLevelMergeWith but we need to replace data with new one
-			if err := writer.InsertFunc(network, inserter.ReplaceWith(data)); err != nil {
-				log.Fatal(err)
+			if *merge {
+				if err := writer.InsertFunc(network, inserter.TopLevelMergeWith(data)); err != nil {
+					log.Fatal(err)
+				}
+			} else {
+				if err := writer.InsertFunc(network, inserter.ReplaceWith(data)); err != nil {
+					log.Fatal(err)
+				}
 			}
-
 		}
 	}
 

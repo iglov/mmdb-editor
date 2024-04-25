@@ -1,22 +1,31 @@
 {
   "data": [
     {
-      "ips": ["94.198.54.0/23"],
+      "ips": ["5.141.82.42/32"],
       "country": {
         "geoname_id": 2017370,
         "iso_code": "RU",
         "names": {
-          "en": "Russia"
+          "en": "Russia",
+          "ru": "Россия"
         }
-      }
+      },
+      "city": {
+        "geoname_id": 1486209,
+        "names": {
+          "en": "Yekaterinburg",
+          "ru": "Екатеринбург"
+        }
+      },
+      "org": "NickyX3 Company"
     },
     {
-      "ips": ["10.200.0.0/24","192.168.33.13/30","127.0.0.1/32"],
+      "ips": ["10.0.0.0/24","192.168.0.1/24","127.0.0.1/32"],
       "country": {
         "geoname_id": 6255148,
         "iso_code": "NA",
         "names": {
-          "en": "Iglov's property"
+          "en": "NickyX3's property"
         }
       }
     }
