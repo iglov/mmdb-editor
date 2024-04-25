@@ -27,6 +27,8 @@ Usage of ./mmdb-editor:
 ```
 
 # How to develop
-1. `git clone https://github.com/iglov/mmdb-editor`
+1. `git clone https://github.com/NickyX3/mmdb-editor`
 2. Change something you want and commit changes
 3. Build with `make all`
+
+Based on https://github.com/iglov/mmdb-editor with some features
