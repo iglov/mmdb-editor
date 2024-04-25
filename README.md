@@ -22,6 +22,7 @@ Usage of ./mmdb-editor:
         Input GeoLite2-City.mmdb file path. (default "./GeoLite2-City.mmdb")
   -o string
         Output modified mmdb file path. (default "./GeoLite2-City-mod.mmdb")
+  -m    Merge mode, if set - inserter.TopLevelMergeWith wil be used, instead inserter.ReplaceWith.
   -v    Print current version and exit.
 ```
 

@@ -134,7 +134,7 @@ func main() {
 				},
 			},
 		}
-		if Empty(data["org"]) == false {
+		if Empty(dataset.Dataset[i].Org) == false {
 			data["org"] = mmdbtype.String(dataset.Dataset[i].Org)
 		}
 
