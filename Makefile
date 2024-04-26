@@ -3,7 +3,7 @@ NAME := mmdb-editor
 BINDIR := bin
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT_TAG := $(shell git rev-parse --short=12 HEAD)
-DATEINFO_TAG ?= $(shell date -u +'%Y%m%d%H%M%S')
+DATEINFO_TAG := $(shell date -u +'%Y%m%d%H%M%S')
 
 PKG_TAG ?= $(shell git tag -l --points-at HEAD)
 ifeq ($(PKG_TAG),)
@@ -11,7 +11,7 @@ PKG_TAG := $(BRANCH)
 endif
 
 LDFLAGS = -X 'main.Version=$(PKG_TAG)-$(DATEINFO_TAG)-$(COMMIT_TAG)'
-GOBUILD=go build -trimpath -tags "$(BUILDTAGS)" -ldflags "$(LDFLAGS)"
+GOBUILD = go build -trimpath -tags "$(BUILDTAGS)" -ldflags "$(LDFLAGS)"
 
 PLATFORM_LIST = \
 	darwin-amd64 \
