@@ -18,6 +18,7 @@ var (
 	inputGeo   = flag.String("i", "./GeoLite2-City.mmdb", "Input GeoLite2-City.mmdb file path.")
 	outputGeo  = flag.String("o", "./GeoLite2-City-mod.mmdb", "Output modified mmdb file path.")
 	version    = flag.Bool("v", false, "Print current version and exit.")
+	merge      = flag.String("m", "replce", "Merge method. It may be: toplevel, recurse or replace. Default: replace")
 )
 
 var Version string
@@ -48,18 +49,32 @@ func Check(f func() error) {
 }
 
 func main() {
+	// Main dataset from json
 	var dataset Dataset
+	// validate merge strategy.
+	var mergeStrategy inserter.FuncGenerator
 
 	flag.Parse()
 	if *version {
 		fmt.Println(Version)
 		os.Exit(0)
 	}
+	if *merge == "toplevel" {
+		mergeStrategy = inserter.TopLevelMergeWith
+		log.Printf("Using merge method: toplevel")
+	} else if *merge == "recurse" {
+		mergeStrategy = inserter.DeepMergeWith
+		log.Printf("Using merge method: recurse")
+	} else {
+		mergeStrategy = inserter.ReplaceWith
+		log.Printf("Using merge method: replace")
+	}
 
 	log.Printf("Loading mmdb: %v", *inputGeo)
 
 	// Load the database we wish to enrich.
 	writer, err := mmdbwriter.Load(*inputGeo, mmdbwriter.Options{
+		Inserter:                mergeStrategy,
 		IncludeReservedNetworks: true,
 		Description:             map[string]string{"en": fmt.Sprintf("Compiled with mmdb-editor (%v) https://github.com/iglov/mmdb-editor", Version)},
 	})
@@ -98,15 +113,13 @@ func main() {
 
 		for _, ip := range dataset.Dataset[i].Ips {
 			_, network, err := net.ParseCIDR(ip)
-			log.Printf("Modifying net: %q", network)
 			if err != nil {
 				log.Fatal(err)
 			}
-			// We can use here inserter.TopLevelMergeWith but we need to replace data with new one
-			if err := writer.InsertFunc(network, inserter.ReplaceWith(data)); err != nil {
+			log.Printf("Modifying net: %q", network)
+			if err := writer.Insert(network, data); err != nil {
 				log.Fatal(err)
 			}
-
 		}
 	}
 
