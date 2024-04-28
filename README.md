@@ -21,7 +21,7 @@ Usage of ./bin/mmdb-editor-linux-amd64:
   -i string
         Input GeoLite2-City.mmdb file path. (default "./GeoLite2-City.mmdb")
   -m string
-        Merge strategy. It may be: toplevel, recurse or replace. (default "replce")
+        Merge strategy. It may be: toplevel, recurse or replace. (default "replace")
   -o string
         Output modified mmdb file path. (default "./GeoLite2-City-mod.mmdb")
   -v    Print current version and exit.

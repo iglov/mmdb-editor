@@ -19,7 +19,7 @@ var (
 	inputGeo   = flag.String("i", "./GeoLite2-City.mmdb", "Input GeoLite2-City.mmdb file path.")
 	outputGeo  = flag.String("o", "./GeoLite2-City-mod.mmdb", "Output modified mmdb file path.")
 	version    = flag.Bool("v", false, "Print current version and exit.")
-	merge      = flag.String("m", "replce", "Merge strategy. It may be: toplevel, recurse or replace.")
+	merge      = flag.String("m", "replace", "Merge strategy. It may be: toplevel, recurse or replace.")
 )
 
 // Version contains main version of build. Get from compiler variables
