@@ -15,11 +15,13 @@ Make your own GeoIP database! The simple utility for editing MMDB databases.
 
 # How to use
 ```text
-Usage of ./mmdb-editor:
+Usage of ./bin/mmdb-editor-linux-amd64:
   -d string
         Dataset file path. (default "./dataset.json")
   -i string
         Input GeoLite2-City.mmdb file path. (default "./GeoLite2-City.mmdb")
+  -m string
+        Merge strategy. It may be: toplevel, recurse or replace. (default "replce")
   -o string
         Output modified mmdb file path. (default "./GeoLite2-City-mod.mmdb")
   -v    Print current version and exit.

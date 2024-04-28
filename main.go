@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"go4.org/netipx"
 	"log"
-	"net"
+	"net/netip"
 	"os"
 
 	"github.com/maxmind/mmdbwriter"
@@ -18,39 +19,75 @@ var (
 	inputGeo   = flag.String("i", "./GeoLite2-City.mmdb", "Input GeoLite2-City.mmdb file path.")
 	outputGeo  = flag.String("o", "./GeoLite2-City-mod.mmdb", "Output modified mmdb file path.")
 	version    = flag.Bool("v", false, "Print current version and exit.")
-	merge      = flag.String("m", "replce", "Merge method. It may be: toplevel, recurse or replace. Default: replace")
+	merge      = flag.String("m", "replce", "Merge strategy. It may be: toplevel, recurse or replace.")
 )
 
+// Version contains main version of build. Get from compiler variables
 var Version string
 
+// Dataset is for JSON dataset mapping
 type Dataset struct {
-	Dataset []Geo `json:"data"`
+	Networks []string       `json:"networks"`
+	Data     map[string]any `json:"data"`
 }
 
-type Geo struct {
-	Ips     []string `json:"ips"`
-	Country Country  `json:"country"`
-}
-
-type Country struct {
-	Iso_code   string `json:"iso_code"`
-	Geoname_id int    `json:"geoname_id"`
-	Names      Names  `json:"names"`
-}
-
-type Names struct {
-	En string `json:"en"`
-}
-
+// Check func for defer functions
 func Check(f func() error) {
 	if err := f(); err != nil {
 		fmt.Println("Received error:", err)
 	}
 }
 
+// toMMDBType key converts field values read from json into their corresponding mmdbtype.DataType.
+// It makes some assumptions for numeric types based on previous knowledge about field types.
+func toMMDBType(key string, value any) (mmdbtype.DataType, error) {
+	switch v := value.(type) {
+	case bool:
+		return mmdbtype.Bool(v), nil
+	case string:
+		return mmdbtype.String(v), nil
+	case map[string]any:
+		m := mmdbtype.Map{}
+		for innerKey, val := range v {
+			innerVal, err := toMMDBType(innerKey, val)
+			if err != nil {
+				return nil, fmt.Errorf("parsing mmdbtype.Map for key %q: %w", key, err)
+			}
+			m[mmdbtype.String(innerKey)] = innerVal
+		}
+		return m, nil
+	case []any:
+		s := mmdbtype.Slice{}
+		for _, val := range v {
+			innerVal, err := toMMDBType(key, val)
+			if err != nil {
+				return nil, fmt.Errorf("parsing mmdbtype.Slice for key %q: %w", key, err)
+			}
+			s = append(s, innerVal)
+		}
+		return s, nil
+	case float64:
+		switch key {
+		case "accuracy_radius", "confidence", "metro_code":
+			return mmdbtype.Uint16(v), nil
+		case "autonomous_system_number", "average_income",
+			"geoname_id", "ipv4_24", "ipv4_32", "ipv6_32",
+			"ipv6_48", "ipv6_64", "population_density":
+			return mmdbtype.Uint32(v), nil
+		case "ip_risk", "latitude", "longitude", "score",
+			"static_ip_score":
+			return mmdbtype.Float64(v), nil
+		default:
+			return nil, fmt.Errorf("unsupported numeric type for key %q: %T", key, value)
+		}
+	default:
+		return nil, fmt.Errorf("unsupported type for key %q: %T", key, value)
+	}
+}
+
 func main() {
-	// Main dataset from json
-	var dataset Dataset
+	// main data map for json dataset
+	var dataset []Dataset
 	// validate merge strategy.
 	var mergeStrategy inserter.FuncGenerator
 
@@ -61,19 +98,19 @@ func main() {
 	}
 	if *merge == "toplevel" {
 		mergeStrategy = inserter.TopLevelMergeWith
-		log.Printf("Using merge method: toplevel")
+		log.Printf("Using merge strategy: toplevel")
 	} else if *merge == "recurse" {
 		mergeStrategy = inserter.DeepMergeWith
-		log.Printf("Using merge method: recurse")
+		log.Printf("Using merge strategy: recurse")
 	} else {
 		mergeStrategy = inserter.ReplaceWith
-		log.Printf("Using merge method: replace")
+		log.Printf("Using merge strategy: replace")
 	}
 
 	log.Printf("Loading mmdb: %v", *inputGeo)
 
 	// Load the database we wish to enrich.
-	writer, err := mmdbwriter.Load(*inputGeo, mmdbwriter.Options{
+	dbWriter, err := mmdbwriter.Load(*inputGeo, mmdbwriter.Options{
 		Inserter:                mergeStrategy,
 		IncludeReservedNetworks: true,
 		Description:             map[string]string{"en": fmt.Sprintf("Compiled with mmdb-editor (%v) https://github.com/iglov/mmdb-editor", Version)},
@@ -82,45 +119,40 @@ func main() {
 		log.Fatal(err)
 	}
 
-	content, err := os.ReadFile(*datasetGeo)
+	file, err := os.Open(*datasetGeo)
 	if err != nil {
-		log.Fatal("Error when opening file: ", err)
+		log.Fatal("Opening json file error:", err)
 	}
+	defer Check(file.Close)
 
-	err = json.Unmarshal(content, &dataset)
-	if err != nil {
+	if err := json.NewDecoder(file).Decode(&dataset); err != nil {
 		log.Printf("error decoding response: %v", err)
 		if e, ok := err.(*json.SyntaxError); ok {
 			log.Printf("syntax error at byte offset %d", e.Offset)
 		}
-		log.Printf("response: %q", content)
+		log.Printf("response: %v", file)
 		log.Fatal("Error during Unmarshal(): ", err)
 	}
 
-	log.Printf("Loaded data: %v", dataset.Dataset)
-
-	for i := 0; i < len(dataset.Dataset); i++ {
-		// Define and insert the new data.
-		data := mmdbtype.Map{
-			"country": mmdbtype.Map{
-				"geoname_id": mmdbtype.Uint32(dataset.Dataset[i].Country.Geoname_id),
-				"iso_code":   mmdbtype.String(dataset.Dataset[i].Country.Iso_code),
-				"names": mmdbtype.Map{
-					"en": mmdbtype.String(dataset.Dataset[i].Country.Names.En),
-				},
-			},
-		}
-
-		for _, ip := range dataset.Dataset[i].Ips {
-			_, network, err := net.ParseCIDR(ip)
+	for _, record := range dataset {
+		for _, network := range record.Networks {
+			prefix, err := netip.ParsePrefix(network)
 			if err != nil {
+				log.Fatal("Parsing networks error:", err)
+			}
+
+			mmdbValue, err := toMMDBType(prefix.String(), record.Data)
+			if err != nil {
+				log.Fatal("Converting value to mmdbtype error:", err)
+			}
+
+			log.Printf("Modifying net: %s", prefix.String())
+			if err := dbWriter.Insert(netipx.PrefixIPNet(prefix), mmdbValue); err != nil {
 				log.Fatal(err)
 			}
-			log.Printf("Modifying net: %q", network)
-			if err := writer.Insert(network, data); err != nil {
-				log.Fatal(err)
-			}
+
 		}
+
 	}
 
 	log.Printf("Compiling and writing modified data into: %v", *outputGeo)
@@ -133,7 +165,7 @@ func main() {
 
 	defer Check(fh.Close)
 
-	_, err = writer.WriteTo(fh)
+	_, err = dbWriter.WriteTo(fh)
 	if err != nil {
 		log.Fatal(err)
 	}
