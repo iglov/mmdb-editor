@@ -74,10 +74,10 @@ install-errcheck:
 	which errcheck || go install github.com/kisielk/errcheck@latest
 
 golangci-lint: install-golangci-lint
-	golangci-lint run --exclude '(SA4003|SA1019|SA5011):' -D errcheck -D structcheck --timeout 2m
+	golangci-lint run --exclude '(SA4003|SA1019|SA5011):' -E contextcheck -E decorder --timeout 2m
 
 install-golangci-lint:
-	which golangci-lint || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.48.0
+	which golangci-lint || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.60.1
 
 check: fmt vet lint errcheck golangci-lint govulncheck
 

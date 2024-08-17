@@ -1,6 +1,6 @@
 module github.com/iglov/mmdb-editor
 
-go 1.19
+go 1.23
 
 require (
 	github.com/maxmind/mmdbinspect v0.2.0
