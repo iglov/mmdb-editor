@@ -6,7 +6,7 @@
 [![codecov](https://codecov.io/gh/iglov/mmdb-editor/branch/main/graph/badge.svg)](https://codecov.io/gh/iglov/mmdb-editor)
 
 # mmdb-editor
-Make your own GeoIP database! The simple utility for editing MMDB databases.
+Make your own GeoIP database! The simplest utility for editing MMDB databases.
 
 # How to start
 1. Download lastest mmdb-editor release

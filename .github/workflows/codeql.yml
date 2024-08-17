@@ -50,9 +50,11 @@ jobs:
 
     - name: Set up Go
       uses: actions/setup-go@v5
-      with:
-        go-version: 1.23
       if: ${{ matrix.language == 'go' }}
+      with:
+        cache: false
+        go-version-file: 'go.mod'
+
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
