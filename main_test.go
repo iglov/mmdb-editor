@@ -2,9 +2,11 @@ package main
 
 import (
 	"github.com/maxmind/mmdbinspect/pkg/mmdbinspect"
-	"github.com/oschwald/maxminddb-golang"
+        "github.com/maxmind/mmdbwriter/mmdbtype"
+        "github.com/oschwald/maxminddb-golang"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+        "fmt"
 	"os"
 	"testing"
 )
@@ -14,6 +16,78 @@ const (
 	CityDBPathOut = "./testdata/GeoLite2-City-mod.mmdb"
 	TestDataset   = "./testdata/dataset.json"
 )
+
+func TestToMMDBType(t *testing.T) {
+    tests := []struct {
+        key         string
+        value       any
+        expected    mmdbtype.DataType
+        expectedErr string
+    }{
+        {
+            key:      "bool_key",
+            value:    true,
+            expected: mmdbtype.Bool(true),
+        },
+        {
+            key:      "string_key",
+            value:    "test",
+            expected: mmdbtype.String("test"),
+        },
+        {
+            key: "map_key",
+            value: map[string]any{
+                "inner_key": "inner_value",
+            },
+            expected: mmdbtype.Map{
+                mmdbtype.String("inner_key"): mmdbtype.String("inner_value"),
+            },
+        },
+        {
+            key: "slice_key",
+            value: []any{
+                "slice_value",
+            },
+            expected: mmdbtype.Slice{
+                mmdbtype.String("slice_value"),
+            },
+        },
+        {
+            key:      "accuracy_radius",
+            value:    1234.0,
+            expected: mmdbtype.Uint16(1234),
+        },
+        {
+            key:      "latitude",
+            value:    52.5164,
+            expected: mmdbtype.Float64(52.5164),
+        },
+        {
+            key:         "unsupported_key",
+            value:       1234.0,
+            expectedErr: "unsupported numeric type for key \"unsupported_key\": float64",
+        },
+        {
+            key:         "unsupported_type_key",
+            value:       struct{}{},
+            expectedErr: "unsupported type for key \"unsupported_type_key\": struct {}",
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(fmt.Sprintf("key=%s,value=%v", tt.key, tt.value), func(t *testing.T) {
+            result, err := toMMDBType(tt.key, tt.value)
+
+            if tt.expectedErr != "" {
+                assert.Error(t, err)
+                assert.Contains(t, err.Error(), tt.expectedErr)
+            } else {
+                assert.NoError(t, err)
+                assert.Equal(t, tt.expected, result)
+            }
+        })
+    }
+}
 
 func TestMain(t *testing.T) {
 	os.Args = []string{"mmdb-editor",
