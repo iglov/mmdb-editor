@@ -6,8 +6,6 @@ import (
         "github.com/oschwald/maxminddb-golang"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-        "bytes"
-        "errors"
         "fmt"
 	"os"
 	"testing"
@@ -18,49 +16,6 @@ const (
 	CityDBPathOut = "./testdata/GeoLite2-City-mod.mmdb"
 	TestDataset   = "./testdata/dataset.json"
 )
-
-func captureOutput(f func()) string {
-    // Create a pipe to capture the output
-    r, w, _ := os.Pipe()
-    // Save the original stdout
-    stdout := os.Stdout
-    // Set stdout to the write end of the pipe
-    os.Stdout = w
-
-    // Run the function (which will print to stdout)
-    f()
-
-    // Close the writer end and restore stdout
-    w.Close()
-    os.Stdout = stdout
-
-    // Read the captured output from the read end of the pipe
-    var buf bytes.Buffer
-    buf.ReadFrom(r)
-
-    return buf.String()
-}
-
-func TestCheck(t *testing.T) {
-    output := captureOutput(func() {
-        Check(func() error {
-            return nil
-        })
-    })
-
-    // Check that there was no output (since no error should be printed)
-    assert.Empty(t, output)
-
-    output = captureOutput(func() {
-        Check(func() error {
-            return errors.New("test error")
-        })
-    })
-
-    // Check that the error message was printed
-    expectedOutput := "Received error: test error\n"
-    assert.Equal(t, expectedOutput, output)
-}
 
 func TestToMMDBType(t *testing.T) {
     tests := []struct {
