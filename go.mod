@@ -6,7 +6,7 @@ require (
 	github.com/maxmind/mmdbinspect v0.2.0
 	github.com/maxmind/mmdbwriter v1.0.0
 	github.com/oschwald/maxminddb-golang v1.12.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go4.org/netipx v0.0.0-20220812043211-3cc044ffd68d
 )
 
